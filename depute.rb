@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'nokogiri'
+
 def deputer_email(url,nom)
 	email_tab = []
 	compteur = 0
@@ -13,9 +14,6 @@ def deputer_email(url,nom)
 		compteur += 1
 		compteur2 += 1
     }
-
-	
-
 end
 
 def depute_url
@@ -33,7 +31,6 @@ def depute_url
 		compteur2 += 1
 	end	
 	deputer_email(depute_tab,nom_tab)
-	
-
 end
+
 depute_url
