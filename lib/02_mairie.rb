@@ -1,46 +1,39 @@
-require 'rubygems'
 require 'nokogiri'
+require 'httparty'
 require 'open-uri'
 
-$url = "http://annuaire-des-mairies.com" # Le lien de base
-
-# recuperer les href pour aller a chaque page du ville de Val d'oise
-doc = Nokogiri::HTML(URI.open("http://annuaire-des-mairies.com/val-d-oise.html"))
-href = doc.css('.lientxt[href]')
-href_arr = href.map do |link|
-  link['href'].gsub(/^./, '')
+def get_townhall_urls
+	page = Nokogiri::HTML(URI.open("http://annuaire-des-mairies.com/val-d-oise.html"))
+   
+    url_array = []
+   
+	urls = page.xpath('//*[@class="lientxt"]/@href')
+	    urls.each do |url|
+		url = "http://annuaire-des-mairies.com" + url.text[1..-1]
+		url_array << url		
+	    end
+	return url_array 
 end
 
-# reconstituer le lien complet pour acceder a chaque page
-def full_link(arr)
-  arr.map do |link|
-    $url + link
-  end
-end
-
-# Array pour stocker les liens de chaque page de ville
-city_link = full_link(href_arr)
-
-# method pour recuperer les emails de chaque page
+#1# On va collecter l'email d'une mairie d'une ville du Val d'Oise
 def get_townhall_email(townhall_url)
-  stream = URI.open(townhall_url)
-  doc = Nokogiri::HTML(stream.read)
-  a = doc.css('tbody tr')
-  arr = a[3].text.split
-  return arr[2]
+	page = Nokogiri::HTML(URI.open(townhall_url))
+    
+    email_array = []
+
+    email = page.css('/html/body/div/main/section[2]/div/table/tbody/tr[4]/td[2]').text
+    town = page.css('/html/body/div/main/section[2]/div/table/tbody/tr[1]/td[1]').text.split #/ on divise la string pour pouvoir récupérer uniquement le nom de la ville
+
+        email_array << {town[3] => email}
+        puts email_array
+        return email_array
 end
 
-# method pour recuperer les titres de chaques page
-def get_city_names(url)
-  doc = Nokogiri::HTML(URI.open(url))
-  href = doc.css('.col-lg-offset-1')
-  text = href.text.split
-  return text[0]
-end
-
-# Pour afficher le resultat
-city_link.map do |element|
-  result = []
-  result << {get_city_names(element) => get_townhall_email(element)}
-  puts result
-end
+#2# On va synchroniser les noms des villes et les emails des mairies
+def data_sync
+	url_array = get_townhall_urls 
+	    url_array.each do |townhall_url|
+		get_townhall_email(townhall_url)
+	    end
+end 
+data_sync
